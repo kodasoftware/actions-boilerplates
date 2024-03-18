@@ -1,0 +1,85 @@
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        type: string
+        required: false
+        default: eu-west-2
+
+      aws-role:
+        type: string
+        required: true
+
+      environment:
+        type: string
+        required: true
+
+      terraform-version:
+        type: string
+        required: false
+        default: "1.1.7"
+
+      working-directory:
+        type: string
+        required: false
+        default: ./terraform
+
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+permissions:
+  id-token: write
+  pull-requests: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Setup: Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws-role }}
+          role-session-name: github-actions-terraform
+          role-duration-seconds: 900
+          aws-region: ${{ inputs.aws-region }}
+        
+      - id: init
+        uses: ./.github/actions/tf-init
+        with:
+          terraform-version: ${{ inputs.terraform-version }}
+          working-directory: ${{ inputs.working-directory }}
+          workspace: ${{ inputs.environment }}
+
+      - id: init-output
+        name: Prepare format output
+        if: ${{ always() && github.event_name == 'pull_request' && steps.init.outcome == 'failure' }}
+        run: |
+          echo "TF_INIT_OUTPUT=\"### Terraform Initialisation `${{ steps.init.outcome }}`\n```hcl\n${{ steps.init.outputs.stdout }}```\"" >> GITHUB_OUTPUT
+
+      - name: Comment failure to PR
+        if: ${{ always() && steps.init-output.conclusion == 'success' }}
+        uses: ./.github/actions/pr-comment
+        with:
+          body: ${{ steps.init-output.outputs.TF_INIT_OUTPUT }}
+
+      - id: plan
+        uses: ./.github/actions/tf-plan
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          workspace: ${{ inputs.environment }}
+
+      - id: plan-output
+        name: Prepare format output
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        run: |
+          echo "TF_PLAN_OUTPUT=\"### Terraform Plan `${{ steps.plan.outcome }}`\n```hcl\n${{ steps.plan.outputs.stdout }}```\"" >> GITHUB_OUTPUT
+
+      - name: Comment plan to PR
+        if: ${{ always() && steps.plan-output.conclusion == 'success' }}
+        uses: ./.github/actions/pr-comment
+        with:
+          body: ${{ steps.plan-output.outputs.TF_PLAN_OUTPUT }}

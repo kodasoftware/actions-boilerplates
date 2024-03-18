@@ -1,0 +1,57 @@
+name: Terraform Lint
+author: Christian Shaw<christian.shaw@nokkel.com>
+description: Lint a Terraform project
+
+inputs:
+  continue-on-error:
+    type: boolean
+    required: false
+    default: true
+
+  setup:
+    type: boolean
+    required: false
+    default: true
+
+  minimum-severity-level:
+    type: choice
+    options:
+      - error
+      - warning
+      - notice
+    default: error
+
+  tflint-version:
+    type: string
+    required: false
+    default: v0.48.0
+
+  working-directory:
+    type: string
+    required: false
+    default: ./terraform
+
+outputs:
+  output:
+    value: ${{ steps.tflint.outputs.TFLINT_OUTPUT }}
+
+runs:
+  using: composite
+  steps:
+    - name: "Setup: TFLint"
+      if: ${{ inputs.setup }}
+      uses: terraform-linters/setup-tflint@v3
+      with:
+        tflint_version: ${{ inputs.tflint-version }}
+
+    - name: "TF: Lint"
+      run: tflint --init
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+
+    - id: tflint
+      name: "TF: Lint"
+      run: echo "TFLINT_OUTPUT=$(tflint --recursive --no-color --minimum-failure-severity=${{ inputs.minimum-severity-level }})" >> GITHUB_OUTPUT
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      continue-on-error: ${{ inputs.continue-on-error }}

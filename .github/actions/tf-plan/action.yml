@@ -1,0 +1,51 @@
+name: Terraform Init
+author: Christian Shaw<christian.shaw@nokkel.com>
+description: Initialise Terraform project
+
+inputs:
+  continue-on-error:
+    type: boolean
+    required: false
+    default: false
+
+  setup:
+    type: boolean
+    required: false
+    default: false
+
+  terraform-version:
+    type: string
+    required: false
+    default: "1.1.7"
+
+  working-directory:
+    type: string
+    required: false
+    default: ./terraform
+
+  workspace:
+    type: string
+    required: true
+
+outputs:
+  stdout:
+    value: ${{ steps.plan.outputs.stdout }}
+
+runs:
+  using: composite
+  steps:
+    - id: setup
+      name: "TF: Setup"
+      if: ${{ inputs.setup }}
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+
+    - id: workspace
+      name: "TF: Workspace Select"
+      run: terraform workspace select ${{ inputs.workspace }}
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: "TF: Plan"
+      id: plan
+      run: terraform plan -no-color

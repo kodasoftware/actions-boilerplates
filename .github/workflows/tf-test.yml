@@ -1,0 +1,78 @@
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        type: string
+        required: false
+        default: eu-west-2
+
+      aws-role:
+        type: string
+        required: true
+
+      environment:
+        type: string
+        required: true
+
+      terraform-version:
+        type: string
+        required: false
+        default: "1.1.7"
+      
+      tflint-version:
+        type: string
+        required: false
+        default: v0.48.0
+
+      working-directory:
+        type: string
+        required: false
+        default: ./terraform
+
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+permissions:
+  id-token: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: fmt
+        name: Format Terraform
+        uses: ./.github/actions/tf-fmt
+        with:
+          setup: true
+          terraform-version: ${{ inputs.terraform-version }}
+          working-directory: ${{ inputs.working-directory }}
+
+      - id: tflint
+        name: Lint Terraform
+        uses: ./.github/actions/tf-lint
+        with:
+          tflint-version: ${{ inputs.tflint-version }}
+          working-directory: ${{ inputs.working-directory }}
+
+      - id: validate
+        name: Validate Terraform
+        uses: ./.github/actions/tf-validate
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+      - id: fmt-output
+        name: Prepare format output
+        if: ${{ always() && github.event_name == 'pull_request' && (steps.fmt.conclusion == 'failure' || steps.tflint.conclusion == 'failure' || steps.validate.conclusion == 'failure') }}
+        run: |
+          echo "TF_FMT_OUTPUT=\"### Terraform Format `${{ steps.fmt.conclusion }}`\n###Terraform Lint `${{ steps.tflint.conclusion }}\n###Terraform Validate `${{ steps.validate.conclusion }}`\n```hcl\n${{ steps.fmt.outputs.stdout }}\n${{ steps.tflint.outputs.stdout }}\n${{ steps.validate.outputs.stdout }}```\"" >> GITHUB_OUTPUT
+
+      - name: Comment failure to PR
+        if: ${{ always() && steps.fmt-output.conclusion == 'success' }}
+        uses: ./.github/actions/pr-comment
+        with:
+          body: ${{ steps.fmt-output.outputs.TF_FMT_OUTPUT }}

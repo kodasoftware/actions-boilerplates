@@ -6,7 +6,7 @@ inputs:
   continue-on-error:
     type: boolean
     required: false
-    default: true
+    default: false
 
   setup:
     type: boolean
@@ -19,7 +19,7 @@ inputs:
       - error
       - warning
       - notice
-    default: error
+    default: warning
 
   tflint-version:
     type: string
@@ -29,11 +29,11 @@ inputs:
   working-directory:
     type: string
     required: false
-    default: ./terraform
+    default: terraform
 
 outputs:
-  output:
-    value: ${{ steps.tflint.outputs.TFLINT_OUTPUT }}
+  stdout:
+    value: ${{ steps.tflint.outputs.stdout }}
 
 runs:
   using: composite
@@ -42,16 +42,17 @@ runs:
       if: ${{ inputs.setup }}
       uses: terraform-linters/setup-tflint@v3
       with:
+        tflint_wrapper: true
         tflint_version: ${{ inputs.tflint-version }}
 
-    - name: "TF: Lint"
+    - name: "TF: Lint Init"
       run: tflint --init
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - id: tflint
       name: "TF: Lint"
-      run: echo "TFLINT_OUTPUT=$(tflint --recursive --no-color --minimum-failure-severity=${{ inputs.minimum-severity-level }})" >> GITHUB_OUTPUT
+      run: tflint --recursive --no-color --minimum-failure-severity ${{ inputs.minimum-severity-level }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       continue-on-error: ${{ inputs.continue-on-error }}

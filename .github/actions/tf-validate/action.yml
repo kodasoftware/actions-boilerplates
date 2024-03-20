@@ -21,11 +21,11 @@ inputs:
   working-directory:
     type: string
     required: false
-    default: ./terraform
+    default: terraform
 
 outputs:
   stdout:
-    value: ${{ steps.validate.outputs.stdout }}
+    value: ${{ steps.validate.outputs.stderr }}
 
 runs:
   using: composite

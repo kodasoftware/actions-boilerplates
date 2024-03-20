@@ -16,7 +16,7 @@ inputs:
   working-directory:
     type: string
     required: false
-    default: ./terraform
+    default: terraform
 
   workspace:
     type: string

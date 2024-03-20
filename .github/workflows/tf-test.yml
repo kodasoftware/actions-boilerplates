@@ -10,6 +10,11 @@ on:
         type: string
         required: true
 
+      continue-on-error:
+        type: boolean
+        required: false
+        default: true
+
       environment:
         type: string
         required: true
@@ -44,35 +49,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: fmt
+      - id: tffmt
         name: Format Terraform
         uses: ./.github/actions/tf-fmt
         with:
+          continue-on-error: ${{ inputs.continue-on-error }}
           setup: true
           terraform-version: ${{ inputs.terraform-version }}
           working-directory: ${{ inputs.working-directory }}
+
+      - name: Comment format output to PR
+        if: ${{ steps.tffmt.outputs.stdout != '' }}
+        uses: ./.github/actions/pr-comment
+        with:
+          body: "### Formatting suggestions\n```hcl\n${{ steps.tffmt.outputs.stdout }}\n```"
 
       - id: tflint
         name: Lint Terraform
         uses: ./.github/actions/tf-lint
         with:
+          continue-on-error: ${{ inputs.continue-on-error }}
           tflint-version: ${{ inputs.tflint-version }}
           working-directory: ${{ inputs.working-directory }}
 
-      - id: validate
+      - name: Comment lint output to PR
+        if: ${{ steps.tflint.outputs.stdout != '' }}
+        uses: ./.github/actions/pr-comment
+        with:
+          body: "###Terraform Lint `${{ steps.tflint.conclusion }}`\n```hcl\n${{ steps.tflint.outputs.stdout }}\n```"
+
+      - id: tfinit
+        uses: ./.github/actions/tf-init
+        with:
+          terraform-version: ${{ inputs.terraform-version }}
+          working-directory: ${{ inputs.working-directory }}
+          workspace: ${{ inputs.environment }}
+
+      - id: tfvalidate
         name: Validate Terraform
         uses: ./.github/actions/tf-validate
         with:
+          continue-on-error: ${{ inputs.continue-on-error }}
           working-directory: ${{ inputs.working-directory }}
 
-      - id: fmt-output
-        name: Prepare format output
-        if: ${{ always() && github.event_name == 'pull_request' && (steps.fmt.conclusion == 'failure' || steps.tflint.conclusion == 'failure' || steps.validate.conclusion == 'failure') }}
-        run: |
-          echo "TF_FMT_OUTPUT=\"### Terraform Format `${{ steps.fmt.conclusion }}`\n###Terraform Lint `${{ steps.tflint.conclusion }}\n###Terraform Validate `${{ steps.validate.conclusion }}`\n```hcl\n${{ steps.fmt.outputs.stdout }}\n${{ steps.tflint.outputs.stdout }}\n${{ steps.validate.outputs.stdout }}```\"" >> GITHUB_OUTPUT
-
-      - name: Comment failure to PR
-        if: ${{ always() && steps.fmt-output.conclusion == 'success' }}
+      - name: Comment validate output to PR
+        if: ${{ steps.tfvalidate.outputs.stdout != '' }}
         uses: ./.github/actions/pr-comment
         with:
-          body: ${{ steps.fmt-output.outputs.TF_FMT_OUTPUT }}
+          body: "###Terraform Validation `${{ steps.tfvalidate.conclusion }}`\n```hcl\n${{ steps.tfvalidate.outputs.stdout }}\n```"

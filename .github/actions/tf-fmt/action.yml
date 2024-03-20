@@ -6,7 +6,7 @@ inputs:
   continue-on-error:
     type: boolean
     required: false
-    default: true
+    default: false
 
   setup:
     type: boolean
@@ -21,11 +21,11 @@ inputs:
   working-directory:
     type: string
     required: false
-    default: ./terraform
+    default: terraform
 
 outputs:
   stdout:
-    value: ${{ steps.fmt.outputs.TF_FMT_OUTPUT }}
+    value: ${{ steps.fmt.outputs.stdout }}
 
 runs:
   using: composite
@@ -39,6 +39,7 @@ runs:
 
     - id: fmt
       name: "TF: Format"
-      run: echo "TF_FMT_OUTPUT=$(terraform fmt -check -no-color)" >> GITHUB_OUTPUT
+      run: terraform fmt -recursive -check -diff -no-color
+      shell: bash
       working-directory: ${{ inputs.working-directory }}
       continue-on-error: ${{ inputs.continue-on-error }}

@@ -21,7 +21,7 @@ inputs:
   working-directory:
     type: string
     required: false
-    default: ./terraform
+    default: terraform
 
   workspace:
     type: string
@@ -49,3 +49,4 @@ runs:
     - name: "TF: Plan"
       id: plan
       run: terraform plan -no-color
+      working-directory: ${{ inputs.working-directory }}

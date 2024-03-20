@@ -381,6 +381,7 @@ buck-out/
 ### Terraform ###
 # Local .terraform directories
 **/.terraform/*
+!**/.terraform/environment
 
 # .tfstate files
 *.tfstate

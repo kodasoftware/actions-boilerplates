@@ -4,11 +4,12 @@ on:
       aws-region:
         type: string
         required: false
-        default: eu-west-2
+        default: ''
 
       aws-role:
         type: string
-        required: true
+        required: false
+        default: ''
 
       environment:
         type: string
@@ -41,6 +42,7 @@ jobs:
 
       - name: "Setup: Configure AWS credentials"
         uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ inputs.aws-region != '' && inputs.aws-role != '' }}
         with:
           role-to-assume: ${{ inputs.aws-role }}
           role-session-name: github-actions-terraform

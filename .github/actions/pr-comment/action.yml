@@ -7,71 +7,17 @@ inputs:
     type: string
     required: true
 
-  # fmt-outcome:
-  #   type: string
-  #   required: true
-
-  # init-outcome:
-  #   type: string
-  #   required: true
-
   github-token:
     type: string
     required: true
-
-  # plan:
-  #   type: string
-  #   required: true
-
-  # plan-outcome:
-  #   type: string
-  #   required: true
-
-  # validate:
-  #   type: string
-  #   required: true
-
-  # validate-outcome:
-  #   type: string
-  #   required: true
-
-  # working-directory:
-  #   type: string
-  #   required: false
-  #   default: terraform
 
 runs:
   using: composite
   steps:
     - uses: actions/github-script@v6
       if: github.event_name == 'pull_request'
-      # env:
-      #   PLAN: "terraform\n${{ inputs.plan. }}"
       with:
         github-token: ${{ inputs.github-token }}
-        # script: |
-        #   const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
-        #   #### Terraform Initialization ⚙️\`${{ inputs.init-outcome }}\`
-        #   #### Terraform Validation 🤖\`${{ inputs.validate-outcome }}\`
-        #   <details><summary>Validation Output</summary>
-
-        #   \`\`\`\n
-        #   ${{ inputs.validate }}
-        #   \`\`\`
-
-        #   </details>
-
-        #   #### Terraform Plan 📖\`${{ inputs.plan-outcome }}\`
-
-        #   <details><summary>Show Plan</summary>
-
-        #   \`\`\`\n
-        #   ${process.env.PLAN}
-        #   \`\`\`
-
-        #   </details>
-
-        #   *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ inputs.working-directory }}\`, Workflow: \`${{ github.workflow }}\`*`;
         script: |
           github.rest.issues.createComment({
             issue_number: context.issue.number,

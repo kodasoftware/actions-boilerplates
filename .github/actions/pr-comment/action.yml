@@ -1,5 +1,5 @@
 name: Comment to a PR
-author: Christian Shaw<christian.shaw@nokkel.com>
+author: Christian Shaw
 description: Adds a comment to a PR
 
 inputs:

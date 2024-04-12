@@ -1,5 +1,5 @@
 name: Comment to a PR
-author: Christian Shaw
+author: Christian Shaw<chris@koda.software>
 description: Adds a comment to a PR
 
 inputs:

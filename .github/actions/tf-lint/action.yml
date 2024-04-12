@@ -1,5 +1,5 @@
 name: Terraform Lint
-author: Christian Shaw<christian.shaw@nokkel.com>
+author: Christian Shaw<chris@koda.software>
 description: Lint a Terraform project
 
 inputs:

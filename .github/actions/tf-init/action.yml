@@ -1,5 +1,5 @@
 name: Terraform Init
-author: Christian Shaw<christian.shaw@nokkel.com>
+author: Christian Shaw<chris@koda.software>
 description: Initialise a Terraform project
 
 inputs:

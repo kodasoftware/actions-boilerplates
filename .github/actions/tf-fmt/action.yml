@@ -1,5 +1,5 @@
 name: Terraform Format
-author: Christian Shaw<christian.shaw@nokkel.com>
+author: Christian Shaw<chris@koda.software>
 description: Check the format of a Terraform project
 
 inputs:

@@ -1,0 +1,90 @@
+on:
+  workflow_call:
+    inputs:
+      asdf-directory:
+        type: string
+        required: false
+        default: ${{ github.workspace }}/.asdf
+
+      aws-region:
+        type: string
+        required: false
+        default: ''
+
+      aws-role:
+        type: string
+        required: false
+        default: ''
+
+      environment:
+        type: string
+        required: true
+
+      terraform-plan-cache-directory:
+        default: ${{ github.workspace }}/.terraform.d/plans
+        required: false
+        type: string
+
+      terraform-plugin-cache-directory:
+        default: ${{ github.workspace }}/.terraform.d/plugin-cache
+        required: false
+        type: string
+
+      working-directory:
+        type: string
+        required: false
+        default: terraform
+
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+      GOOGLE_CREDENTIALS:
+        required: false
+
+permissions:
+  id-token: write
+  pull-requests: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Setup: Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ inputs.aws-region != '' && inputs.aws-role != '' }}
+        with:
+          role-to-assume: ${{ inputs.aws-role }}
+          role-session-name: github-actions-terraform
+          role-duration-seconds: 900
+          aws-region: ${{ inputs.aws-region }}
+        
+      - uses: kodasoftware/actions-boilerplates/.github/actions/asdf-setup@main
+        with:
+          asdf-cache-directory: ${{ inputs.asdf-directory }}
+          os: ${{ runner.os }}
+          terraform-lockfile-path: /${{ inputs.working-directory }}
+          terraform-plugin-cache-directory: ${{ inputs.terraform-plugin-cache-directory }}
+
+      - id: plan
+        uses: kodasoftware/actions-boilerplates/.github/actions/tg-plan@main
+        with:
+          google-credentials: ${{ secrets.GOOGLE_CREDENTIALS }}
+          os: ${{ runner.os }}
+          terraform-plan-cache-directory: ${{ inputs.terraform-plan-cache-directory }}
+          terraform-lockfile-path: /${{ inputs.working-directory }}
+          working-directory: ./${{ inputs.working-directory }}
+
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Execution result of \`plan\` in \`${{ inputs.working-directory }}\`\n\n\`\`\`terraform\n${{ steps.plan.outputs.stdout }}\n\`\`\`\n\n* To **apply** this plan, comment:\n\t* \`terraform apply\`\n* To **plan** this project again, comment\n\t* \`terrform plan\``
+            })

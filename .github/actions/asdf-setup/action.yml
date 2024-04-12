@@ -22,9 +22,6 @@ inputs:
     type: string
 
 runs:
-  env:
-    TF_PLUGIN_CACHE_DIR: ${{ inputs.tf-plugin-cache-directory }}
-    ASDF_DIR: ${{ inputs.asdf-cache-directory }}
   using: composite
   steps:
     - name: Create Plugin Cache Dir
@@ -32,12 +29,17 @@ runs:
       run: |
         mkdir -p $TF_PLUGIN_CACHE_DIR
         mkdir -p $ASDF_DIR
+      env:
+        TF_PLUGIN_CACHE_DIR: ${{ inputs.tf-plugin-cache-directory }}
+        ASDF_DIR: ${{ inputs.asdf-cache-directory }}
 
     - name: Terraform Plugin Cache
       uses: actions/cache@v4.0.1
       with:
         path: ${{ env.TF_PLUGIN_CACHE_DIR }}
         key: ${{ inputs.os }}-terraform-plugin-cache-${{ hashFiles('**${{ inputs.tf-lock-file-path }}/.terraform.lock.hcl') }}
+      env:
+        TF_PLUGIN_CACHE_DIR: ${{ inputs.tf-plugin-cache-directory }}
 
     - uses: asdf-vm/actions/setup@v3
 
@@ -46,5 +48,7 @@ runs:
       with:
         path: ${{ env.ASDF_DIR }}
         key: ${{ inputs.os }}-asdf-plugin-cache-${{ hashFiles('**/.tool-versions') }}
+      env:
+        ASDF_DIR: ${{ inputs.asdf-cache-directory }}
 
     - uses: asdf-vm/actions/install@v3

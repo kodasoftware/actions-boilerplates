@@ -1,0 +1,62 @@
+name: Terragrunt Plan
+author: Christian Shaw<chris@koda.software>
+description: Runs Terragrunt plan on a project
+
+inputs:
+  google-credentials:
+    default: ''
+    required: false
+    type: string
+
+  os:
+    required: true
+    type: string
+
+  terraform-plan-cache-directory:
+    required: true
+    type: string
+
+  terraform-lockfile-path:
+    default: ''
+    required: false
+    type: string
+
+  working-directory:
+    required: true
+    type: string
+
+outputs:
+  stdout:
+    value: ${{ steps.plan.outputs.stdout }}
+
+runs:
+  using: composite
+  steps:
+    - name: Create Terraform Plan Cache Dir
+      shell: bash
+      run: |
+        mkdir -p $TF_PLAN_CACHE_DIR
+      env:
+        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
+
+    - name: Terraform Plan Cache
+      uses: actions/cache@v4.0.1
+      with:
+        path: ${{ env.TF_PLAN_CACHE_DIR }}
+        key: ${{ inputs.os }}-asdf-plugin-cache-${{ hashFiles('**${{ inputs.terraform-lock-file-path }}/.tool-versions') }}
+      env:
+        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
+
+    - id: plan
+      name: "TG: Plan"
+      run: |
+        {
+          echo 'stdout<<EOF'
+          terragrunt run-all plan -no-color -out $TF_PLAN_CACHE_DIR/plan.out
+          echo EOF
+        } >> $GITHUB_OUTPUT
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GOOGLE_CREDENTIALS: ${{ inputs.google-credentials }}
+        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}

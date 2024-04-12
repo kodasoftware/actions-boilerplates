@@ -36,9 +36,6 @@ on:
         default: terraform
 
     secrets:
-      GITHUB_TOKEN:
-        required: true
-
       GOOGLE_CREDENTIALS:
         required: false
 

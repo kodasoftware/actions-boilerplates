@@ -52,7 +52,7 @@ runs:
       run: |
         {
           echo 'stdout<<EOF'
-          terragrunt run-all plan -no-color -out $TF_PLAN_CACHE_DIR/plan.out
+          terragrunt plan -no-color -out $TF_PLAN_CACHE_DIR/plan.out
           echo EOF
         } >> $GITHUB_OUTPUT
       shell: bash

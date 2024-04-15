@@ -53,7 +53,7 @@ runs:
         if [ -f $TF_PLAN_CACHE_DIR/plan.out ]; then
           {
             echo 'stdout<<EOF'
-            terragrunt run-all apply -no-color -auto-approve $TF_PLAN_CACHE_DIR/plan.out
+            terragrunt apply -no-color -auto-approve $TF_PLAN_CACHE_DIR/plan.out
             echo EOF
           } >> $GITHUB_OUTPUT
         else

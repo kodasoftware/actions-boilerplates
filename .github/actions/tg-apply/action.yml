@@ -27,7 +27,7 @@ inputs:
 
 outputs:
   stdout:
-    value: ${{ steps.plan.outputs.stdout }}
+    value: ${{ steps.apply.outputs.stdout }}
 
 runs:
   using: composite

@@ -43,7 +43,7 @@ runs:
       uses: actions/cache@v4.0.1
       with:
         path: ${{ env.TF_PLAN_CACHE_DIR }}
-        key: ${{ inputs.os }}-terraform-plan-cache-${{ hashFiles('${{ inputs.terraform-lock-file-path }}/.terraform.lock.hcl') }}
+        key: ${{ inputs.os }}-terraform-plan-cache-${{ hashFiles('**/.terraform.lock.hcl') }}
       env:
         TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
 

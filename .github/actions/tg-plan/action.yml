@@ -8,19 +8,6 @@ inputs:
     required: false
     type: string
 
-  os:
-    required: true
-    type: string
-
-  terraform-plan-cache-directory:
-    required: true
-    type: string
-
-  terraform-lockfile-path:
-    default: '**'
-    required: false
-    type: string
-
   working-directory:
     required: true
     type: string
@@ -32,40 +19,15 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Create Terraform Plan Cache Dir
-      shell: bash
-      run: |
-        mkdir -p $TF_PLAN_CACHE_DIR
-      env:
-        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
-
-    - name: Terraform Plan Cache
-      uses: actions/cache@v4.0.1
-      with:
-        path: ${{ env.TF_PLAN_CACHE_DIR }}
-        key: ${{ inputs.os }}-terraform-plan-cache-${{ hashFiles('**/.terraform.lock.hcl') }}
-        save-always: true
-      env:
-        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
-
     - id: plan
       name: "TG: Plan"
       run: |
         {
           echo 'stdout<<EOF'
-          terragrunt plan -no-color -out $TF_PLAN_CACHE_DIR/plan.out
+          terragrunt plan -no-color
           echo EOF
         } >> $GITHUB_OUTPUT
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
         GOOGLE_CREDENTIALS: ${{ inputs.google-credentials }}
-        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
-
-    - name: Terraform Plan Cache Save
-      uses: actions/cache/save@v4.0.1
-      with:
-        path: ${{ env.TF_PLAN_CACHE_DIR }}
-        key: ${{ inputs.os }}-terraform-plan-cache-${{ hashFiles('**/.terraform.lock.hcl') }}
-      env:
-        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}

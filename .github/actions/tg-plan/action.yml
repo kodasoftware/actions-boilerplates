@@ -61,3 +61,12 @@ runs:
       env:
         GOOGLE_CREDENTIALS: ${{ inputs.google-credentials }}
         TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
+
+  - name: Terraform Plan Cache Save
+      uses: actions/cache/save@v4.0.1
+      with:
+        path: ${{ env.TF_PLAN_CACHE_DIR }}
+        key: ${{ inputs.os }}-terraform-plan-cache-${{ hashFiles('**/.terraform.lock.hcl') }}
+        save-always: true
+      env:
+        TF_PLAN_CACHE_DIR: ${{ inputs.terraform-plan-cache-directory }}
